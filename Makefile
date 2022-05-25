@@ -2,17 +2,17 @@ IDIR =include
 EIGEN_DIR=lib/eigen-3.3.7/
 
 # Point to your Matlab install -- (specific to your machine)
-MATLAB_DIR=/Applications/MATLAB_R2019a.app/extern/include
-MATLAB_BIN=/Applications/MATLAB_R2019a.app/bin/maci64
+MATLAB_DIR=/Applications/MATLAB_R2022a.app/extern/include
+MATLAB_BIN=/Applications/MATLAB_R2022a.app/bin/maci64
 
-# Path to your libgfortran library, wherever it may reside. /usr/lib? /usr/local/lib? 
+# Path to your libgfortran library, wherever it may reside. /usr/lib? /usr/local/lib?
 # (Mine is in Cellar since I installed it using Homebrew)
-LGFORTRAN_PATH=/usr/local/Cellar/gcc/8.3.0/lib/gcc/8
+LGFORTRAN_PATH=/usr/local/gfortran/lib/
 
 # Which compiler to use -- c++, gcc, etc
 CC=c++
 
-CFLAGS=-I$(IDIR) -I$(EIGEN_DIR) -I$(MATLAB_DIR)
+CFLAGS=-I$(IDIR) -I$(EIGEN_DIR) -I$(MATLAB_DIR) -target x86_64-apple-darwin
 
 # Nansen flags
 # MATLAB_FLAGS = -L /usr/local/MATLAB/R2012a/bin/glnxa64 -leng -lm -lmx -lmex -lmat -lut -Wl,-rpath=/usr/local/MATLAB/R2012a/bin/glnxa64
@@ -24,7 +24,7 @@ ODIR =build
 
 # Libraries
 LDIR =lib
-	
+
 # output binary directory
 BDIR =bin
 
@@ -67,12 +67,12 @@ damping: $(OBJ) libxformd.a $(ODIR)/gauss_legendre.o
 								 -lxformd -lgfortran $(MATLAB_FLAGS) -o $(BDIR)/$@
 	# Move the binaries up to the main directory
 	# -- this assumes 'damping' is a subdirectory of the Stanford Raytracer
-	cp bin/damping ../bin/damping
-	cp data/crres_clean.mat ../bin/crres_clean.mat
+	cp bin/damping damping
+	cp data/crres_clean.mat crres_clean.mat
 
-# Link and build "dump_psd_models" executable 
+# Link and build "dump_psd_models" executable
 dump_psd_models: $(DUMP_OBJ) libxformd.a
-	$(CC) $(CFLAGS) $(DUMP_OBJ) -L $(LDIR) -L $(LGFORTRAN_PATH) -lxformd -lgfortran $(MATLAB_FLAGS) -o $(BDIR)/$@ 
+	$(CC) $(CFLAGS) $(DUMP_OBJ) -L $(LDIR) -L $(LGFORTRAN_PATH) -lxformd -lgfortran $(MATLAB_FLAGS) -o $(BDIR)/$@
 
 # Need a separate rule for gauss_legendre (I forget why)
 $(ODIR)/gauss_legendre.o: $(SRC_DIR)/gauss_legendre.c $(IDIR)/gauss_legendre.h
@@ -103,4 +103,3 @@ $(ODIR):
 	test -d $(ODIR) || mkdir $(ODIR)
 $(BDIR):
 	test -d $(BDIR) || mkdir $(BDIR)
-
