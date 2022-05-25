@@ -31,7 +31,7 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
     Vector3d vgrel;
     Vector3d Bhat;
     Vector3d pos_prev;
-    double pos_tmp[3]; 
+    double pos_tmp[3];
 
     double kpar, kperp;
     double theta;
@@ -47,7 +47,7 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
     double kmag;
 
     double R, L, P, S, D; // Stix parameters
-    double a, b;          
+    double a, b;
     double B0mag;
     double wps2, whs;
 
@@ -67,7 +67,7 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
     xin[0] = ray.pos[0][0];
     xin[1] = ray.pos[0][1];
     xin[2] = ray.pos[0][2];
-    
+
     // Map to magnetic dipole coordinates
     sm_to_mag_d_(itime_in, xin, xout);
     cart_to_pol_d_(xout, &lat_init, &lon_init, &r_init);
@@ -85,11 +85,11 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
 
     // ----------- Here's how we get the phase-space density model: ----------
     //  (equivalent to:   [n_fit, An_fit] = get_fit_params(L, MLT, AE_level, false);
-    //                     fe = @(vperp, vpar) crres_polar_hybrid_psd(vperp, vpar, n_fit, An_fit, L, L_pp);    
+    //                     fe = @(vperp, vpar) crres_polar_hybrid_psd(vperp, vpar, n_fit, An_fit, L, L_pp);
 
     // (sorry for the hard-coded path here)
     char crres_data_file[100] = "crres_clean.mat";
-    
+
     psd_model psd;
     psd.initialize(crres_data_file);
 
@@ -112,7 +112,7 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
 
         // Get lat, lon, alt in geomagnetic:
         sm_to_mag_d_(itime_in, pos.data(), pos_tmp);
-        cart_to_pol_d_(pos_tmp, &lat, &lon, &r); 
+        cart_to_pol_d_(pos_tmp, &lat, &lon, &r);
 
         // cout << "orig: " << r << ",\t" << lat << endl;
         // cout << "xfrm: " << r << ",\t" << lat << " lon: " << lon*R2D <<  endl;
@@ -129,7 +129,7 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
         // cout << "MLT (mine): " << mlt << endl;
 
         // Set the current location parameters for the density model:
-        L_pp = bulge(Kp, mlt); // Get plasmapause at this MLT
+        // L_pp = bulge(Kp, mlt); // Get plasmapause at this MLT
         // cout << "i: " << ii << "\tMLT: " << mlt<< "\tLpp: " << L_pp << endl;
         psd.set_params(L_sh, L_pp, mlt, AE_level);
 
@@ -164,7 +164,7 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
         P = 1.;
 
         for (int jj=0; jj < ray.Ns[ii].size(); jj++) {
-            
+
             // Ns*(Qs^2)/(ms*Eps_0)
             wps2 = ray.Ns[ii][jj]*pow(ray.qs[jj],2) \
                    /(ray.ms[jj]*EPS0);
@@ -200,12 +200,12 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
 
         // ---------- hot_dispersion_imag.m ------
 
-        integ.initialize(psd, kperp, kpar, 
-                        ray.w, n, m_low, m_hi, wce_h, 
+        integ.initialize(psd, kperp, kpar,
+                        ray.w, n, m_low, m_hi, wce_h,
                         R, L, P, S);
 
         // // Integrate it!
-        Di = gauss_legendre(50, integrand_wrapper, (void*) &integ, 0., 1.);
+        Di = gauss_legendre(256, integrand_wrapper, (void*) &integ, 0., 1.);
         ki = -(ray.w/C)*(0.5)*(1./(4.*n*(2.*a*n*n-b))) * Di;
         // (ki is the output of spatialdamping.m)
 
@@ -219,14 +219,14 @@ void damping_foust(rayF &ray, double Kp, double AE_level, int itime_in[2], bool 
         if (include_geom_factor) {
             geom_fact = r_init * cos(lat_init) / (r * cos(lat) / R_E);
         } else {
-         geom_fact = 1.0;   
+         geom_fact = 1.0;
         }
         // printf("r_init = %0.3f, lat_init = %0.3f, lat = %0.3f, r=%0.3f, ",r_init, lat_init, lat, r);
         // printf("geometric factor: %0.3f\n",geom_fact);
 
         // cout << "dist: " << dist << "\n";
         // Power = previous power *(e^(-(distance)(damping)(2))).
-        ray.damping[ii] = geom_fact*ray.damping[ii-1]*exp(-dist*ki_along_vg*2.0);        
+        ray.damping[ii] = geom_fact*ray.damping[ii-1]*exp(-dist*ki_along_vg);
 
 
 
